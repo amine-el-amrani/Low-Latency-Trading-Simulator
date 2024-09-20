@@ -17,16 +17,19 @@ if not API_KEY or not API_SECRET:
 
 fetcher = MarketDataFetcher(API_KEY, API_SECRET, BASE_URL)
 
-class StockSymbol(BaseModel):
-    symbol: str
+class StockSymbols(BaseModel):
+    symbols: list[str]
 
 @app.post("/get_market_data")
-async def get_market_data(stock: StockSymbol):
-    symbol = stock.symbol.upper()
+async def get_market_data(stocks: StockSymbols):
+    if not stocks.symbols or len(stocks.symbols) == 0:
+        raise HTTPException(status_code=400, detail="Symbols list cannot be empty")
+
     try:
-        data = await fetcher.fetch_market_data(symbol)
+        data = await fetcher.fetch_concurrently(stocks.symbols)
         if data:
-            return {"symbol": symbol, "data": data}
+            result = {symbol: d for symbol, d in zip(stocks.symbols, data)}
+            return {"data": result}
         else:
             raise HTTPException(status_code=404, detail="Market data not found.")
     except Exception as e:

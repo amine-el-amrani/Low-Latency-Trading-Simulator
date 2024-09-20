@@ -3,6 +3,7 @@ import asyncio
 import os
 import redis
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 class MarketDataFetcher:
     def __init__(self, api_key, api_secret, base_url, redis_host='redis', redis_port=6379):
@@ -12,6 +13,7 @@ class MarketDataFetcher:
         self.api_secret = api_secret
         self.base_url = base_url
         self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
+        self.executor = ThreadPoolExecutor(max_workers=10)  # Allows for up to 10 concurrent threads
 
     async def fetch_market_data(self, symbol):
         """Fetches real-time market data for a given symbol, with caching."""
@@ -38,3 +40,8 @@ class MarketDataFetcher:
                 else:
                     print(f"Error fetching data: {response.status}")
                     return None
+
+    async def fetch_concurrently(self, symbols):
+        """Handles concurrent fetching of multiple symbols using async tasks."""
+        tasks = [self.fetch_market_data(symbol) for symbol in symbols]
+        return await asyncio.gather(*tasks)
