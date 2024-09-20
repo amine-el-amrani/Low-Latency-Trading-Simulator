@@ -5,3 +5,4 @@ redis==4.3.3
 fastapi==0.95.1
 uvicorn==0.22.0
 python-dotenv==1.0.0
+websockets==10.2
