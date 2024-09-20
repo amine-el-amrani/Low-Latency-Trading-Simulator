@@ -1,12 +1,10 @@
-# src/web_interface.py
-
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import asyncio
+from typing import List
+from ..utils.market_data_fetcher import MarketDataFetcher
 import os
-from .trading_simulator import MarketDataFetcher
 
-app = FastAPI()
+router = APIRouter()
 
 API_KEY = os.getenv('APCA_API_KEY_ID')
 API_SECRET = os.getenv('APCA_API_SECRET_KEY')
@@ -18,9 +16,9 @@ if not API_KEY or not API_SECRET:
 fetcher = MarketDataFetcher(API_KEY, API_SECRET, BASE_URL)
 
 class StockSymbols(BaseModel):
-    symbols: list[str]
+    symbols: List[str]
 
-@app.post("/get_market_data")
+@router.post("/get_market_data")
 async def get_market_data(stocks: StockSymbols):
     if not stocks.symbols or len(stocks.symbols) == 0:
         raise HTTPException(status_code=400, detail="Symbols list cannot be empty")
